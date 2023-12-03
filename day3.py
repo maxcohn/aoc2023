@@ -21,8 +21,8 @@ class PartNumber:
 @dataclass
 class Schematic:
     part_numbers: list[PartNumber]
-    # Mapping from row to a list of columns with a symbol
-    symbol_locations: dict[int, list[int]]
+    # Mapping from row to a dict of the column mapping to the symbol
+    symbol_locations: dict[int, dict[int, str]]
 
 
 def find_all_unique_chars(schematic: str):
@@ -59,10 +59,9 @@ def parse_schematic(schematic: str) -> Schematic:
                 )
             else:
                 symbol_pos = match.start(0)
-                if cur_row in symbol_locations:
-                    symbol_locations[cur_row].append(symbol_pos)
-                else:
-                    symbol_locations[cur_row] = [symbol_pos]
+                if cur_row not in symbol_locations:
+                    symbol_locations[cur_row] = {}
+                symbol_locations[cur_row][symbol_pos] = match.group(0)
 
         cur_row += 1
 
@@ -117,4 +116,39 @@ def part1():
     print("part1:", cumulative_part_numbers)
 
 
+def part2():
+    raw_schematic = Path("./day3.input.txt").read_text()
+    schematic = parse_schematic(raw_schematic)
+
+    # Dict of (row, col) of gears to the number of part numbers they touch
+    gear_used_counts: dict[tuple[int, int], list[int]] = {}
+
+    for part_number in schematic.part_numbers:
+        # For each part number, we have to check if any of the surrounding spaces has a symbol on it
+
+        locs_to_check = places_to_check(part_number)
+        for loc in locs_to_check:
+            # Check if this location we need to check is occupied by a symbol
+            row, col = loc
+
+            if row in schematic.symbol_locations:
+                if col in schematic.symbol_locations[row]:
+                    if schematic.symbol_locations[row][col] == "*":
+                        if (row, col) not in gear_used_counts:
+                            gear_used_counts[(row, col)] = []
+
+                        gear_used_counts[(row, col)].append(part_number.value)
+
+    cumulative_gear_ratio = 0
+    for (row, col), part_num_list in gear_used_counts.items():
+        if len(part_num_list) != 2:
+            continue
+
+        gear_ratio = part_num_list[0] * part_num_list[1]
+        cumulative_gear_ratio += gear_ratio
+
+    print("part2:", cumulative_gear_ratio)
+
+
 part1()
+part2()
