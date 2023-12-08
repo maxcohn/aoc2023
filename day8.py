@@ -1,5 +1,6 @@
 from pathlib import Path
 from dataclasses import dataclass
+import math
 
 
 @dataclass
@@ -29,7 +30,6 @@ def parse_input() -> Game:
 
 def part1():
     game = parse_input()
-
     cur_space = "AAA"
     steps = 0
     while cur_space != "ZZZ":
@@ -42,4 +42,36 @@ def part1():
     print("part1:", steps)
 
 
+def is_finished(spaces: list[str]) -> bool:
+    """Checks if the part2 puzzle is finished"""
+    for space in spaces:
+        if space[2] != "Z":
+            return False
+    return True
+
+
+def part2():
+    game = parse_input()
+
+    # Find all starting spaces (those that end in 'A')
+    starting_spaces = list(filter(lambda k: k[2] == "A", game.spaces.keys()))
+    print(starting_spaces)
+
+    first_cycles = []
+
+    for space in starting_spaces:
+        cur_space = space
+        steps = 0
+        while cur_space[2] != "Z":
+            next_move = game.choices[steps % len(game.choices)]
+
+            cur_space = game.spaces[cur_space][0 if next_move == "L" else 1]
+
+            steps += 1
+        first_cycles.append(steps)
+
+    print("part2:", math.lcm(*first_cycles))
+
+
 part1()  # 18827
+part2()  # 20220305520997
